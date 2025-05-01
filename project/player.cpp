@@ -2,27 +2,46 @@
 #include <QBrush>
 #include <QTimer>
 #include <QObject>
-#include "qobject.h"
+#include <qmath.h>
 
-Player::Player(QGraphicsItem *parent) : QGraphicsRectItem(parent) {
-    setRect(0, 0, 30, 30);
+Player::Player(QGraphicsItem *parent) : QGraphicsEllipseItem(parent) {
+    int diameter = 30;
+    setRect(0, 0, diameter, diameter);
+    setPos(400 - diameter/2, 300 - diameter/2);
     setBrush(Qt::blue);
     setFlag(QGraphicsItem::ItemIsFocusable);
     setFocus();
 
-    // 初始化定时器（每 30ms 触发一次移动）
-    moveTimer = new QTimer();
-    QInputDevice::connect(moveTimer, &QTimer::timeout, [this]() {
-        moveBy(dx * 5, dy * 5);
-    });
-    moveTimer->start(30);
-
-    QInputDevice::connect(moveTimer, &QTimer::timeout, [this]() {
-        moveBy(dx * 5, dy * 5); // 步长为 5 像素
+    moveTimer = new QTimer;
+    QObject::connect(moveTimer, &QTimer::timeout, [this]() {
+        int newX = pos().x() + dx * 10;
+        int newY = pos().y() + dy * 10;
+        int distance = qSqrt(qPow(newX - circleCenterX, 2) + qPow(newY - circleCenterY, 2));
+        if (distance <= circleRadius) {
+            moveBy(dx * 10, dy * 10);
+        }
     });
 }
 
-// 按键按下事件：记录方向
+Player::~Player() {
+    moveTimer->stop();
+    delete moveTimer;
+    qDebug() << "Player destroyed";
+}
+
+void Player::setCircleBounds(int centerX, int centerY, int radius) {
+    circleCenterX = centerX;
+    circleCenterY = centerY;
+    circleRadius = radius;
+}
+
+void Player::resetState() {
+    dx = 0;
+    dy = 0;
+    moveTimer->stop();
+    qDebug() << "Player state reset: dx =" << dx << ", dy =" << dy;
+}
+
 void Player::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
     case Qt::Key_Left:  dx = -1; break;
@@ -32,11 +51,10 @@ void Player::keyPressEvent(QKeyEvent *event) {
     default: return;
     }
     if (!moveTimer->isActive()) {
-        moveTimer->start(30); // 启动定时器
+        moveTimer->start(30);
     }
 }
 
-// 按键释放事件：清除方向
 void Player::keyReleaseEvent(QKeyEvent *event) {
     switch (event->key()) {
     case Qt::Key_Left:
@@ -46,6 +64,6 @@ void Player::keyReleaseEvent(QKeyEvent *event) {
     default: return;
     }
     if (dx == 0 && dy == 0) {
-        moveTimer->stop(); // 停止定时器
+        moveTimer->stop();
     }
 }
