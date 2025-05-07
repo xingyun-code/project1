@@ -15,3 +15,7 @@
 实验报告库里也有
 b站链接
 https://www.bilibili.com/video/BV1JoVFzHE42
+5月7日更新
+新上传了一个relese.zip文件（完整的relese和debug文件传不上去）
+relese文件我根据csdn的教程把qt的运行文件打包进去了
+下载下来可以直接跑
